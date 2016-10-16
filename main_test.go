@@ -17,7 +17,7 @@ import (
 	_ "github.com/pippinsoft/gorm/dialects/mysql"
 	"github.com/pippinsoft/gorm/dialects/postgres"
 	_ "github.com/pippinsoft/gorm/dialects/sqlite"
-	"github.com/pippinsoft/now"
+	"github.com/jinzhu/now"
 )
 
 var (

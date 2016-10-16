@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/pippinsoft/gorm"
-	"github.com/pippinsoft/now"
+	"github.com/jinzhu/now"
 
 	"testing"
 	"time"
