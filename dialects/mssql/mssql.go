@@ -129,17 +129,18 @@ func (s mssql) CurrentDatabase() (name string) {
 }
 
 func (mssql) LimitAndOffsetSQL(limit, offset interface{}) (sql string) {
-	if limit != nil {
-		if parsedLimit, err := strconv.ParseInt(fmt.Sprint(limit), 0, 0); err == nil && parsedLimit > 0 {
-			sql += fmt.Sprintf(" FETCH NEXT %d ROWS ONLY", parsedLimit)
-		}
-	}
-	if offset != nil {
-		if parsedOffset, err := strconv.ParseInt(fmt.Sprint(offset), 0, 0); err == nil && parsedOffset > 0 {
-			sql += fmt.Sprintf(" OFFSET %d ROWS", parsedOffset)
-		}
-	}
-	return
+    if offset != nil && limit != nil {
+        if parsedOffset, err := strconv.ParseInt(fmt.Sprint(offset), 0, 0); err == nil {
+            if parsedOffset < 0 {
+                 parsedOffset = 0
+            }
+            sql += fmt.Sprintf(" OFFSET %d ROWS", parsedOffset)
+        }
+        if parsedLimit, err := strconv.ParseInt(fmt.Sprint(limit), 0, 0); err == nil && parsedLimit > 0 {
+            sql += fmt.Sprintf(" FETCH NEXT %d ROWS ONLY", parsedLimit)
+        }
+    }
+    return
 }
 
 func (mssql) SelectFromDummyTable() string {
