@@ -329,8 +329,11 @@ func (scope *Scope) QuotedTableName() (name string) {
 
 // CombinedConditionSql return combined condition sql
 func (scope *Scope) CombinedConditionSql() string {
-	return scope.joinsSQL() + scope.whereSQL() + scope.groupSQL() +
-		scope.havingSQL() + scope.orderSQL() + scope.limitAndOffsetSQL()
+	qstr := scope.joinsSQL() + scope.whereSQL() + scope.groupSQL() + scope.havingSQL()
+	if scope.Dialect().GetName() != "mssql" {
+		qstr += scope.orderSQL() + scope.limitAndOffsetSQL()
+	}
+	return qstr
 }
 
 // Raw set raw sql
@@ -794,7 +797,32 @@ func (scope *Scope) prepareQuerySQL() {
 	if scope.Search.raw {
 		scope.Raw(strings.TrimSuffix(strings.TrimPrefix(scope.CombinedConditionSql(), " WHERE ("), ")"))
 	} else {
-		scope.Raw(fmt.Sprintf("SELECT %v FROM %v %v", scope.selectSQL(), scope.QuotedTableName(), scope.CombinedConditionSql()))
+		var qstr string
+		if scope.Dialect().GetName() != "mssql" {
+			qstr = fmt.Sprintf("SELECT %v FROM %v %v", scope.selectSQL(),
+		        		scope.QuotedTableName(), scope.CombinedConditionSql())
+		} else {
+			offset, err := strconv.ParseInt(fmt.Sprint(scope.Search.offset), 0, 0)
+			if err != nil || offset < 0 {
+				offset = 0
+			}
+			limit, err := strconv.ParseInt(fmt.Sprint(scope.Search.limit), 0, 0)
+			if err != nil || limit < 0 {
+				limit = 0
+			}
+			if offset > 0 || limit > 0 {
+				qstr = fmt.Sprintf("SELECT %v, ROW_NUMBER() OVER (%v) AS RowNum FROM %v %v",
+								   scope.selectSQL(), scope.orderSQL(), scope.QuotedTableName(),
+								   scope.CombinedConditionSql())
+				qstr = fmt.Sprintf("SELECT * FROM (%s) AS LimitQuery", qstr)
+				qstr += fmt.Sprintf(" WHERE LimitQuery.RowNum BETWEEN %d AND %d", offset, limit)
+			} else {
+				qstr = fmt.Sprintf("SELECT %v FROM %v %v", scope.selectSQL(),
+									scope.QuotedTableName(), scope.CombinedConditionSql() + scope.orderSQL())
+
+			}
+		}
+		scope.Raw(qstr)
 	}
 	return
 }
