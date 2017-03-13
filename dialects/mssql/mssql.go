@@ -12,14 +12,14 @@ import (
 	"github.com/pippinsoft/gorm"
 )
 
-func setIdentityInsert(scope *gorm.Scope) {
-	if scope.Dialect().GetName() == "mssql" {
-		scope.NewDB().Exec(fmt.Sprintf("SET IDENTITY_INSERT %v ON", scope.TableName()))
-	}
-}
+//func setIdentityInsert(scope *gorm.Scope) {
+//	if scope.Dialect().GetName() == "mssql" {
+//		scope.NewDB().Exec(fmt.Sprintf("SET IDENTITY_INSERT %v ON", scope.TableName()))
+//	}
+//}
 
 func init() {
-	gorm.DefaultCallback.Create().After("gorm:begin_transaction").Register("mssql:set_identity_insert", setIdentityInsert)
+	//gorm.DefaultCallback.Create().After("gorm:begin_transaction").Register("mssql:set_identity_insert", setIdentityInsert)
 	gorm.RegisterDialect("mssql", &mssql{})
 }
 
